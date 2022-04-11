@@ -81,7 +81,11 @@ async fn simulate_simple_approve() -> anyhow::Result<()> {
     // approving another account gives different approval_id
     let res = nft_contract
         .call(&worker, "nft_approve")
-        .args_json((TOKEN_ID, token_receiver_contract.id(), Option::<String>::None))?
+        .args_json((
+            TOKEN_ID,
+            token_receiver_contract.id(),
+            Option::<String>::None,
+        ))?
         .gas(300_000_000_000_000)
         // note that token_receiver's account name is shorter, and so takes less bytes to store and
         // therefore requires a smaller deposit!
@@ -108,7 +112,11 @@ async fn simulate_approval_with_call() -> anyhow::Result<()> {
 
     let res = nft_contract
         .call(&worker, "nft_approve")
-        .args_json((TOKEN_ID, approval_receiver_contract.id(), Some("return-now".to_string())))?
+        .args_json((
+            TOKEN_ID,
+            approval_receiver_contract.id(),
+            Some("return-now".to_string()),
+        ))?
         .gas(300_000_000_000_000)
         .deposit(450000000000000000000)
         .transact()
@@ -149,7 +157,12 @@ async fn simulate_approved_account_transfers_token() -> anyhow::Result<()> {
     // alice sends to self
     let res = alice
         .call(&worker, nft_contract.id().clone(), "nft_transfer")
-        .args_json((alice.id(), TOKEN_ID, Some(1u64), Some("gotcha! bahahaha".to_string())))?
+        .args_json((
+            alice.id(),
+            TOKEN_ID,
+            Some(1u64),
+            Some("gotcha! bahahaha".to_string()),
+        ))?
         .gas(300_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
@@ -186,7 +199,11 @@ async fn simulate_revoke() -> anyhow::Result<()> {
     // root approves token_receiver
     let res = nft_contract
         .call(&worker, "nft_approve")
-        .args_json((TOKEN_ID, token_receiver_contract.id(), Option::<String>::None))?
+        .args_json((
+            TOKEN_ID,
+            token_receiver_contract.id(),
+            Option::<String>::None,
+        ))?
         .gas(300_000_000_000_000)
         .deposit(450000000000000000000)
         .transact()
@@ -270,7 +287,11 @@ async fn simulate_revoke_all() -> anyhow::Result<()> {
     // root approves token_receiver
     let res = nft_contract
         .call(&worker, "nft_approve")
-        .args_json((TOKEN_ID, token_receiver_contract.id(), Option::<String>::None))?
+        .args_json((
+            TOKEN_ID,
+            token_receiver_contract.id(),
+            Option::<String>::None,
+        ))?
         .gas(300_000_000_000_000)
         .deposit(450000000000000000000)
         .transact()

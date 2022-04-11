@@ -41,7 +41,11 @@ async fn simulate_enum_total_supply() -> anyhow::Result<()> {
     let (nft_contract, _, _, _) = init(&worker).await?;
     mint_more(&nft_contract, &worker).await?;
 
-    let total_supply: U128 = nft_contract.call(&worker, "nft_total_supply").view().await?.json()?;
+    let total_supply: U128 = nft_contract
+        .call(&worker, "nft_total_supply")
+        .view()
+        .await?
+        .json()?;
     assert_eq!(total_supply, U128::from(4));
 
     Ok(())

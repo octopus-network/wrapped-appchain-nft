@@ -28,7 +28,7 @@ use near_sdk::{
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct Contract {
+pub struct WrappedAppchainNFT {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
 }
@@ -43,7 +43,7 @@ enum StorageKey {
 }
 
 #[near_bindgen]
-impl Contract {
+impl WrappedAppchainNFT {
     ///
     #[init]
     pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
@@ -75,17 +75,22 @@ impl Contract {
         token_owner_id: AccountId,
         token_metadata: TokenMetadata,
     ) -> Token {
-        assert_eq!(env::predecessor_account_id(), self.tokens.owner_id, "Unauthorized");
-        self.tokens.internal_mint(token_id, token_owner_id, Some(token_metadata))
+        assert_eq!(
+            env::predecessor_account_id(),
+            self.tokens.owner_id,
+            "Unauthorized"
+        );
+        self.tokens
+            .internal_mint(token_id, token_owner_id, Some(token_metadata))
     }
 }
 
-near_contract_standards::impl_non_fungible_token_core!(Contract, tokens);
-near_contract_standards::impl_non_fungible_token_approval!(Contract, tokens);
-near_contract_standards::impl_non_fungible_token_enumeration!(Contract, tokens);
+near_contract_standards::impl_non_fungible_token_core!(WrappedAppchainNFT, tokens);
+near_contract_standards::impl_non_fungible_token_approval!(WrappedAppchainNFT, tokens);
+near_contract_standards::impl_non_fungible_token_enumeration!(WrappedAppchainNFT, tokens);
 
 #[near_bindgen]
-impl NonFungibleTokenMetadataProvider for Contract {
+impl NonFungibleTokenMetadataProvider for WrappedAppchainNFT {
     fn nft_metadata(&self) -> NFTContractMetadata {
         self.metadata.get().unwrap()
     }

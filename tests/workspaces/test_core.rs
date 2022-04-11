@@ -137,7 +137,10 @@ async fn simulate_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {
         .view()
         .await?
         .json::<Token>()?;
-    assert_eq!(token.owner_id.to_string(), token_receiver_contract.id().to_string());
+    assert_eq!(
+        token.owner_id.to_string(),
+        token_receiver_contract.id().to_string()
+    );
 
     Ok(())
 }
@@ -168,7 +171,10 @@ async fn simulate_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {
         .view()
         .await?
         .json::<Token>()?;
-    assert_eq!(token.owner_id.to_string(), token_receiver_contract.id().to_string());
+    assert_eq!(
+        token.owner_id.to_string(),
+        token_receiver_contract.id().to_string()
+    );
 
     Ok(())
 }
@@ -252,7 +258,12 @@ async fn simulate_simple_transfer_no_logs_on_failure() -> anyhow::Result<()> {
     let res = nft_contract
         .call(&worker, "nft_transfer")
         // transfer to the current owner should fail and not print log
-        .args_json((nft_contract.id(), TOKEN_ID, Option::<u64>::None, Some("simple transfer")))?
+        .args_json((
+            nft_contract.id(),
+            TOKEN_ID,
+            Option::<u64>::None,
+            Some("simple transfer"),
+        ))?
         .gas(200_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()

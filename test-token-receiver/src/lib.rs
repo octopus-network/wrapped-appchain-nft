@@ -36,7 +36,9 @@ trait ValueReturnTrait {
 impl TokenReceiver {
     #[init]
     pub fn new(non_fungible_token_account_id: AccountId) -> Self {
-        Self { non_fungible_token_account_id }
+        Self {
+            non_fungible_token_account_id,
+        }
     }
 }
 
@@ -73,8 +75,13 @@ impl NonFungibleTokenReceiver for TokenReceiver {
             "return-it-later" => {
                 let prepaid_gas = env::prepaid_gas();
                 let account_id = env::current_account_id();
-                ext_self::ok_go(true, account_id, NO_DEPOSIT, prepaid_gas - GAS_FOR_NFT_ON_TRANSFER)
-                    .into()
+                ext_self::ok_go(
+                    true,
+                    account_id,
+                    NO_DEPOSIT,
+                    prepaid_gas - GAS_FOR_NFT_ON_TRANSFER,
+                )
+                .into()
             }
             "keep-it-now" => PromiseOrValue::Value(false),
             "keep-it-later" => {

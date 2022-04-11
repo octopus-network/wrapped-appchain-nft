@@ -30,4 +30,3 @@ members = [
   "test-approval-receiver",
   "test-token-receiver",
 ]
-
