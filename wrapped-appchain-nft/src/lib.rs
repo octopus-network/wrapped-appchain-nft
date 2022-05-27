@@ -23,7 +23,8 @@ use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
 use near_sdk::{
-    env, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
+    env, log, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault, Promise,
+    PromiseOrValue,
 };
 
 #[near_bindgen]
@@ -80,8 +81,17 @@ impl WrappedAppchainNFT {
             self.tokens.owner_id,
             "Unauthorized"
         );
-        self.tokens
-            .internal_mint(token_id, token_owner_id, Some(token_metadata))
+        let init_storage = env::storage_usage();
+        let token = self
+            .tokens
+            .internal_mint(token_id, token_owner_id, Some(token_metadata));
+        let increased_storage = env::storage_usage() - init_storage;
+        log!(
+            "Storage usage increased by '{}' bytes. Storage deposit increased by '{}'.",
+            increased_storage,
+            u128::from(increased_storage) * env::storage_byte_cost()
+        );
+        token
     }
 }
 
