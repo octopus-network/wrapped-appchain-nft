@@ -15,6 +15,7 @@ NOTES:
   - To prevent the deployed contract from being modified or deleted, it should not have any access
     keys on its account.
 */
+use near_contract_standards::non_fungible_token::events::NftMint;
 use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata,
 };
@@ -82,9 +83,18 @@ impl WrappedAppchainNFT {
             "Unauthorized"
         );
         let init_storage = env::storage_usage();
-        let token = self
-            .tokens
-            .internal_mint(token_id, token_owner_id, Some(token_metadata));
+        let token = self.tokens.internal_mint_with_refund(
+            token_id,
+            token_owner_id,
+            Some(token_metadata),
+            Some(self.tokens.owner_id.clone()),
+        );
+        NftMint {
+            owner_id: &token.owner_id,
+            token_ids: &[&token.token_id],
+            memo: None,
+        }
+        .emit();
         let increased_storage = env::storage_usage() - init_storage;
         log!(
             "Storage usage increased by '{}' bytes. Storage deposit increased by '{}'.",
