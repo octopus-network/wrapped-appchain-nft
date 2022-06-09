@@ -7,7 +7,6 @@ target
 **/target/
 /docker-target/
 **/pkg/
-/Cargo.lock
 
 /res
 

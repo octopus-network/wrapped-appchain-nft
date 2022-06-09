@@ -2,7 +2,6 @@ use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC,
 };
 use near_contract_standards::non_fungible_token::TokenId;
-use near_primitives::views::FinalExecutionStatus;
 use near_units::parse_near;
 use workspaces::prelude::DevAccountDeployer;
 use workspaces::{Account, Contract, DevNetwork, Worker};
@@ -31,14 +30,14 @@ pub async fn helper_mint(
         reference: None,
         reference_hash: None,
     };
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_mint")
         .args_json((token_id, nft_contract.id(), token_metadata))?
         .gas(300_000_000_000_000)
         .deposit(parse_near!("7 mN"))
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await
+        .expect("Failed in calling 'nft_mint'");
 
     Ok(())
 }
@@ -52,10 +51,10 @@ pub async fn init(
     worker: &Worker<impl DevNetwork>,
 ) -> anyhow::Result<(Contract, Account, Contract, Contract)> {
     let nft_contract = worker
-        .dev_deploy(include_bytes!("../../res/wrapped_appchain_nft.wasm").to_vec())
+        .dev_deploy(&include_bytes!("../../res/wrapped_appchain_nft.wasm").to_vec())
         .await?;
 
-    let res = nft_contract
+    nft_contract
         .call(&worker, "new")
         .args_json((
             nft_contract.id(),
@@ -71,8 +70,8 @@ pub async fn init(
         ))?
         .gas(300_000_000_000_000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await
+        .expect("Failed in initializing nft contract");
 
     let token_metadata = TokenMetadata {
         title: Some("Olympus Mons".into()),
@@ -88,48 +87,45 @@ pub async fn init(
         reference: None,
         reference_hash: None,
     };
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_mint")
         .args_json((TOKEN_ID, nft_contract.id(), token_metadata))?
         .gas(300_000_000_000_000)
         .deposit(parse_near!("7 mN"))
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await
+        .expect("Failed in calling 'nft_mint'");
 
-    let res = nft_contract
+    let alice = nft_contract
         .as_account()
         .create_subaccount(&worker, "alice")
         .initial_balance(parse_near!("10 N"))
         .transact()
-        .await?;
-    assert!(matches!(
-        res.details.status,
-        FinalExecutionStatus::SuccessValue(_)
-    ));
-    let alice = res.result;
+        .await
+        .expect("Failed in creating account for alice")
+        .unwrap();
 
     let token_receiver_contract = worker
-        .dev_deploy(include_bytes!("../../res/token_receiver.wasm").to_vec())
+        .dev_deploy(&include_bytes!("../../res/token_receiver.wasm").to_vec())
         .await?;
-    let res = token_receiver_contract
+    token_receiver_contract
         .call(&worker, "new")
         .args_json((nft_contract.id(),))?
         .gas(300_000_000_000_000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await
+        .expect("Failed in initializing token receiver contract");
 
     let approval_receiver_contract = worker
-        .dev_deploy(include_bytes!("../../res/approval_receiver.wasm").to_vec())
+        .dev_deploy(&include_bytes!("../../res/approval_receiver.wasm").to_vec())
         .await?;
-    let res = approval_receiver_contract
+    approval_receiver_contract
         .call(&worker, "new")
         .args_json((nft_contract.id(),))?
         .gas(300_000_000_000_000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await
+        .expect("Failed in initializing approval receiver contract");
 
     return Ok((
         nft_contract,

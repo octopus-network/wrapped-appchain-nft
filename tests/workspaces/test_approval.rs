@@ -1,6 +1,5 @@
 use crate::utils::init;
 use near_contract_standards::non_fungible_token::Token;
-use near_primitives::views::FinalExecutionStatus;
 use near_sdk::{AccountId, ONE_NEAR, ONE_YOCTO};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -9,18 +8,17 @@ pub const TOKEN_ID: &str = "0";
 
 #[tokio::test]
 async fn simulate_simple_approve() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let (nft_contract, alice, token_receiver_contract, _) = init(&worker).await?;
 
     // root approves alice
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))?
         .gas(300_000_000_000_000)
         .deposit(510000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // check nft_is_approved, don't provide approval_id
     let alice_approved = nft_contract
@@ -61,14 +59,13 @@ async fn simulate_simple_approve() -> anyhow::Result<()> {
     assert_eq!(token.approved_account_ids.unwrap(), expected_approvals);
 
     // root approves alice again, which changes the approval_id and doesn't require as much deposit
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))?
         .gas(300_000_000_000_000)
         .deposit(ONE_NEAR)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     let alice_approval_id_is_2 = nft_contract
         .call(&worker, "nft_is_approved")
@@ -79,7 +76,7 @@ async fn simulate_simple_approve() -> anyhow::Result<()> {
     assert!(alice_approval_id_is_2);
 
     // approving another account gives different approval_id
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((
             TOKEN_ID,
@@ -91,8 +88,7 @@ async fn simulate_simple_approve() -> anyhow::Result<()> {
         // therefore requires a smaller deposit!
         .deposit(450000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     let token_receiver_approval_id_is_3 = nft_contract
         .call(&worker, "nft_is_approved")
@@ -107,7 +103,7 @@ async fn simulate_simple_approve() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn simulate_approval_with_call() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let (nft_contract, _, _, approval_receiver_contract) = init(&worker).await?;
 
     let res = nft_contract
@@ -141,22 +137,21 @@ async fn simulate_approval_with_call() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn simulate_approved_account_transfers_token() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let (nft_contract, alice, _, _) = init(&worker).await?;
 
     // root approves alice
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))?
         .gas(300_000_000_000_000)
         .deposit(510000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // alice sends to self
-    let res = alice
-        .call(&worker, nft_contract.id().clone(), "nft_transfer")
+    alice
+        .call(&worker, nft_contract.id(), "nft_transfer")
         .args_json((
             alice.id(),
             TOKEN_ID,
@@ -166,8 +161,7 @@ async fn simulate_approved_account_transfers_token() -> anyhow::Result<()> {
         .gas(300_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_tranfer'");
 
     // token now owned by alice
     let token = nft_contract
@@ -183,21 +177,20 @@ async fn simulate_approved_account_transfers_token() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn simulate_revoke() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let (nft_contract, alice, token_receiver_contract, _) = init(&worker).await?;
 
     // root approves alice
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))?
         .gas(300_000_000_000_000)
         .deposit(510000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // root approves token_receiver
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((
             TOKEN_ID,
@@ -207,18 +200,16 @@ async fn simulate_revoke() -> anyhow::Result<()> {
         .gas(300_000_000_000_000)
         .deposit(450000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // root revokes alice
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_revoke")
         .args_json((TOKEN_ID, alice.id()))?
         .gas(300_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_revoke'");
 
     // alice is revoked...
     let alice_approved = nft_contract
@@ -239,14 +230,13 @@ async fn simulate_revoke() -> anyhow::Result<()> {
     assert!(token_receiver_approved);
 
     // root revokes token_receiver
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_revoke")
         .args_json((TOKEN_ID, token_receiver_contract.id()))?
         .gas(300_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_revoke'");
 
     // alice is still revoked...
     let alice_approved = nft_contract
@@ -271,21 +261,20 @@ async fn simulate_revoke() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn simulate_revoke_all() -> anyhow::Result<()> {
-    let worker = workspaces::sandbox();
+    let worker = workspaces::sandbox().await?;
     let (nft_contract, alice, token_receiver_contract, _) = init(&worker).await?;
 
     // root approves alice
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))?
         .gas(300_000_000_000_000)
         .deposit(510000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // root approves token_receiver
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_approve")
         .args_json((
             TOKEN_ID,
@@ -295,18 +284,16 @@ async fn simulate_revoke_all() -> anyhow::Result<()> {
         .gas(300_000_000_000_000)
         .deposit(450000000000000000000)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_approve'");
 
     // root revokes all
-    let res = nft_contract
+    nft_contract
         .call(&worker, "nft_revoke_all")
         .args_json((TOKEN_ID,))?
         .gas(300_000_000_000_000)
         .deposit(ONE_YOCTO)
         .transact()
-        .await?;
-    assert!(matches!(res.status, FinalExecutionStatus::SuccessValue(_)));
+        .await.expect("Failed in calling 'nft_revoke_all'");
 
     // alice is revoked...
     let alice_approved = nft_contract
